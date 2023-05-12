@@ -8,6 +8,7 @@ const forgeVersion = process.env.NODE_ENV === 'production' ? `${development}min`
 const i18nAutoLoaderOptions = {
   watch: true,
   name: 'i18n.t',
+  alias: ['$t', '_vm.$t', /\.\$t$/],
   dependency: {
     name: 'i18n',
     value: '/lang/index.js',
@@ -67,14 +68,22 @@ module.exports = {
       .loader('worker-loader')
       .end();
     config.module
-    // 这个规则会针对项目里用到的js文件、vue文件里的tempalte部分和script部分
+      // 这里设置loader，把js文件和vue文件里的script标签内的脚本设置经过i18n-auto-webpack/loader的编译，实现转译中文为vue-i18n提供的i18n.tc方法
       .rule('js')
-      .use('i18n-auto-loader')
-      .loader('i18n-auto-webpack/loader')
-      .options(i18nAutoLoaderOptions)
-      .before('babel-loader')
+        .use('i18n-auto-loader')
+            .loader('i18n-auto-webpack/loader')
+            .options(i18nAutoLoaderOptions)
+            .before('babel-loader')
+          .end()
       .end()
-      .end();
+      // 这里设置loader，把vue文件的template部分设置经过i18n-auto-webpack/loader的编译，实现转译中文为vue-i18n提供的i18n.tc方法
+      .rule('vueTemplateRender')
+        .test(/\.vue$/)
+        .resourceQuery(/type=template/)
+        .enforce('post')
+        .use('i18n-auto-loader')
+            .loader('i18n-auto-webpack/loader')
+            .options(i18nAutoLoaderOptions)
   },
   // css: {
   //   loaderOptions: {
